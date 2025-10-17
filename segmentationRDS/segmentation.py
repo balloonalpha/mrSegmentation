@@ -2,6 +2,7 @@ import os
 import numpy as np
 import torch
 import torchvision
+import supervision as sv
 
 from math import sqrt
 
@@ -336,22 +337,44 @@ class DetectAnything:
 
 
     def detect(self, image:np.ndarray, TEXT_PROMPT:str, BOX_THRESHOLD=0.25, TEXT_THRESHOLD=0.25, NMS_THRESHOLD=0.8):
+        SLICE_WH = (1000,1000)
+        OVERLAP_RATIO = (0.2, 0.2)
 
-        source_h, source_w, _ = image.shape
-        gd_imgSize = get_size_with_aspect_ratio((source_w, source_h), 800, max_size=1333)
-        gd_Transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor(),
-                                                       torchvision.transforms.Resize(gd_imgSize),
-                                                       torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-        gd_image = gd_Transform(image)
-        # Detection
-        boxes, logits, phrases = predict(self.gdm, gd_image, TEXT_PROMPT, BOX_THRESHOLD, TEXT_THRESHOLD, self.DEVICE)
-        boxes = boxes * torch.Tensor([source_w, source_h, source_w, source_h])
-        xyxy = torchvision.ops.box_convert(boxes=boxes, in_fmt="cxcywh", out_fmt="xyxy").numpy()
-        confidence = logits.numpy()
-        # NMS
-        nms_idx = torchvision.ops.nms(torch.from_numpy(xyxy), torch.from_numpy(confidence), NMS_THRESHOLD).numpy().tolist()
-        xyxy = xyxy[nms_idx]
-        confidence = confidence[nms_idx]
+        def callback(image:np.ndarray):
+            source_h, source_w, _ = image.shape
+            gd_imgSize = get_size_with_aspect_ratio((source_w, source_h), 800, max_size=1333)
+            gd_Transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor(),
+                                                           torchvision.transforms.Resize(gd_imgSize),
+                                                           torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+            gd_image = gd_Transform(image)
+            # Detection
+            boxes, logits, phrases = predict(self.gdm, gd_image, TEXT_PROMPT, BOX_THRESHOLD, TEXT_THRESHOLD, self.DEVICE)
+
+            # Filtering
+            if boxes.numel() != 0:
+                areas = boxes[:,2] * boxes[:,3]
+                max_area = areas.min() * 10
+                keep = areas <= max_area
+                boxes = boxes[keep]
+                logits = logits[keep]
+
+            boxes = boxes * torch.Tensor([source_w, source_h, source_w, source_h])
+            xyxy = torchvision.ops.box_convert(boxes=boxes, in_fmt="cxcywh", out_fmt="xyxy").numpy()
+            confidence = logits.numpy()
+
+            return sv.Detections(xyxy=xyxy, confidence=confidence, class_id=np.zeros_like(confidence))
+
+        slicer = sv.InferenceSlicer(
+                callback=callback,
+                slice_wh=SLICE_WH,
+                overlap_ratio_wh=OPVERLAP_RATIO,
+                iou_threshold=NMS_THRESHOLD
+                #thread_workers=1
+                )
+        detections = slicer(image)
+
+        xyxy = detections.xyxy
+        confidence = detections.confidence
 
         return xyxy, confidence
 
