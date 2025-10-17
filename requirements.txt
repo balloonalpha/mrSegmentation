@@ -1,5 +1,5 @@
 ram @ git+https://github.com/xinyu1205/recognize-anything.git
-groundingdino @ git+https://github.com/IDEA_Reasearch/GroundingDINO.git
+groundingdino @ git+https://github.com/IDEA-Research/GroundingDINO.git
 segment-anything==1.0
 birefnet @ git+https://github.com/meshroomHubWarehouse/BiRefNet.git@compatibilityPython3.9
 scipy  # needed for ram
