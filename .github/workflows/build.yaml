@@ -1,0 +1,31 @@
+name: build
+
+on:
+  push:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          & .\venv\Scripts\activate.ps1
+          pip install --upgrade pip
+          pip install -r torch-requirements.txt
+          pip install -r groundingdino-requirements.txt
+          pip install -r requirements.txt
+          deactivate
+      - name: Archive artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mrSegmentation_windows
+          path: |
+            venv
+            meshroom
+            segmentationRDS

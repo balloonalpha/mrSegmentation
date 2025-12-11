@@ -1,9 +1,8 @@
 ram @ git+https://github.com/xinyu1205/recognize-anything.git
-groundingdino-py==0.4.0
 segment-anything==1.0
 birefnet @ git+https://github.com/meshroomHubWarehouse/BiRefNet.git@compatibilityPython3.9
 scipy  # needed for ram
 fairscale  # needed for ram
 einops  # needed for birefnet
 kornia  # needed for birefnet
-supervision>=0.14.0 # TODO: solve conflict with old groundingdino-py
+supervision>=0.14.0

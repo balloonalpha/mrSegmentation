@@ -1,0 +1,2 @@
+--no-build-isolation
+groundingdino @ git+https://github.com/IDEA-Research/GroundingDINO.git
