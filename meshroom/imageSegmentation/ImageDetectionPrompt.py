@@ -105,6 +105,36 @@ Bounded box sizes can be increased by a ratio from 0 to 100%.
             range=(0.0, 1.0, 0.1),
             value=0.2,
         ),
+        desc.FloatParam(
+            name="overlapW",
+            label="overlap width",
+            description="overlap width",
+            value=0.2,
+        ),
+        desc.FloatParam(
+            name="overlapH",
+            label="overlap height",
+            description="overlap height",
+            value=0.2,
+        ),
+        desc.FloatParam(
+            name="K",
+            label="K",
+            description="k",
+            value=10,
+        ),
+        desc.IntParam(
+            name="sliceW",
+            label="Slice width",
+            description="slice width",
+            value=1000,
+        ),
+        desc.IntParam(
+            name="sliceH",
+            label="Slice Height",
+            description="slice height",
+            value=1000,
+        ),
         desc.IntParam(
             name="bboxMargin",
             label="Detection Margin",
@@ -247,7 +277,10 @@ Bounded box sizes can be increased by a ratio from 0 to 100%.
                                                            threshold = chunk.node.thresholdDetection.value,
                                                            force = chunk.node.forceDetection.value,
                                                            bboxMargin = chunk.node.bboxMargin.value,
-                                                           verbose = False)
+                                                           verbose = False,
+                                                           slice_wh = (chunk.node.sliceW.value, chunk.node.sliceH.value),
+                                                           overlap_ratio = (chunk.node.overlapW.value, chunk.node.overlapH.value),
+                                                           k = chunk.node.K.value)
 
                     chunk.logger.info("image: {}".format(iFile))
                     chunk.logger.debug("tags: {}".format(tags))

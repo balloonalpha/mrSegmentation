@@ -336,10 +336,7 @@ class DetectAnything:
         return (tagInWordList, tags)
 
 
-    def detect(self, image:np.ndarray, TEXT_PROMPT:str, BOX_THRESHOLD=0.25, TEXT_THRESHOLD=0.25, NMS_THRESHOLD=0.8):
-        SLICE_WH = (1000,1000)
-        OVERLAP_RATIO = (0.2, 0.2)
-
+    def detect(self, image:np.ndarray, TEXT_PROMPT:str, BOX_THRESHOLD=0.25, TEXT_THRESHOLD=0.25, NMS_THRESHOLD=0.8, SLICE_WH = (1000,1000), OVERLAP_RATIO = (0.2,0.2), K = 10):
         def callback(image:np.ndarray):
             source_h, source_w, _ = image.shape
             gd_imgSize = get_size_with_aspect_ratio((source_w, source_h), 800, max_size=1333)
@@ -353,7 +350,7 @@ class DetectAnything:
             # Filtering
             if boxes.numel() != 0:
                 areas = boxes[:,2] * boxes[:,3]
-                max_area = areas.min() * 10
+                max_area = areas.min() * K
                 keep = areas <= max_area
                 boxes = boxes[keep]
                 logits = logits[keep]
@@ -379,7 +376,7 @@ class DetectAnything:
         return xyxy, confidence
 
 
-    def process(self, image: np.ndarray, prompt: str, synonyms: str = '', threshold: float = 0.2, force: bool = False, bboxMargin:int = 0, verbose: bool = False) -> np.ndarray:
+    def process(self, image: np.ndarray, prompt: str, synonyms: str = '', threshold: float = 0.2, force: bool = False, bboxMargin:int = 0, verbose: bool = False, overlap_ratio:(float,float) = (0.2,0.2), slice_wh:(int,int) = (1000,1000), k:int = 10) -> np.ndarray:
 
         listSynonyms = synonyms.split('\n')
         listPrompt = prompt.split('\n')
@@ -402,7 +399,7 @@ class DetectAnything:
         bboxes = np.array([])
         confidence = np.array([])
         if recoOK or force:
-            bboxes, confidence = self.detect(image=image, TEXT_PROMPT=prompt, BOX_THRESHOLD=threshold)
+            bboxes, confidence = self.detect(image=image, TEXT_PROMPT=prompt, BOX_THRESHOLD=threshold, SLICE_WH = slice_wh, OVERLAP_RATIO = overlap_ratio, K = k)
             H,W,_ = image.shape
             for k,bbox in enumerate(bboxes):
                 if bbox[0] > bbox[2]:
