@@ -1,4 +1,4 @@
-__version__ = "0.2"
+__version__ = "0.3"
 
 import os
 from pathlib import Path
@@ -117,7 +117,7 @@ Bounded box sizes can be increased by a ratio from 0 to 100%.
             description="overlap height",
             value=0.2,
         ),
-        desc.FloatParam(
+        desc.IntParam(
             name="K",
             label="K",
             description="k",
