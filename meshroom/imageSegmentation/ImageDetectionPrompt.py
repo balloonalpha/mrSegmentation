@@ -117,6 +117,12 @@ Bounded box sizes can be increased by a ratio from 0 to 100%.
             description="overlap height",
             value=0.2,
         ),
+        desc.FloatParam(
+            name="nms",
+            label="NMS Threshold",
+            description="NMS Threshold",
+            value=0.2,
+        ),
         desc.IntParam(
             name="K",
             label="K",
@@ -133,6 +139,18 @@ Bounded box sizes can be increased by a ratio from 0 to 100%.
             name="sliceH",
             label="Slice Height",
             description="slice height",
+            value=1000,
+        ),
+        desc.IntParam(
+            name="borderW",
+            label="Border width",
+            description="border width",
+            value=1000,
+        ),
+        desc.IntParam(
+            name="borderH",
+            label="Border Height",
+            description="border height",
             value=1000,
         ),
         desc.IntParam(
@@ -279,8 +297,10 @@ Bounded box sizes can be increased by a ratio from 0 to 100%.
                                                            bboxMargin = chunk.node.bboxMargin.value,
                                                            verbose = False,
                                                            slice_wh = (chunk.node.sliceW.value, chunk.node.sliceH.value),
+                                                           border_wh = (chunk.node.borderW.value, chunk.node.borderH.value),
                                                            overlap_ratio = (chunk.node.overlapW.value, chunk.node.overlapH.value),
-                                                           k = chunk.node.K.value)
+                                                           k = chunk.node.K.value,
+                                                           nms = chunk.node.nms.value)
 
                     chunk.logger.info("image: {}".format(iFile))
                     chunk.logger.debug("tags: {}".format(tags))

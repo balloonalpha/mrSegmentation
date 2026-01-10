@@ -336,7 +336,7 @@ class DetectAnything:
         return (tagInWordList, tags)
 
 
-    def detect(self, image:np.ndarray, TEXT_PROMPT:str, BOX_THRESHOLD=0.25, TEXT_THRESHOLD=0.25, NMS_THRESHOLD=0.8, SLICE_WH = (1000,1000), OVERLAP_RATIO = (0.2,0.2), K = 10):
+    def detect(self, image:np.ndarray, TEXT_PROMPT:str, BOX_THRESHOLD=0.25, TEXT_THRESHOLD=0.25, NMS_THRESHOLD=0.8, SLICE_WH = (1000,1000), BORDER_WH = (1000,1000), OVERLAP_RATIO = (0.2,0.2), K = 10):
         def callback(image:np.ndarray):
             source_h, source_w, _ = image.shape
             gd_imgSize = get_size_with_aspect_ratio((source_w, source_h), 800, max_size=1333)
@@ -364,19 +364,26 @@ class DetectAnything:
         slicer = sv.InferenceSlicer(
                 callback=callback,
                 slice_wh=SLICE_WH,
-                overlap_ratio_wh=OPVERLAP_RATIO,
+                overlap_wh=OVERLAP_RATIO,
                 iou_threshold=NMS_THRESHOLD
                 #thread_workers=1
                 )
-        detections = slicer(image)
+        
+        source_h, source_w, _ = image.shape
+        (x1, y1) = BORDER_WH
+        x2, y2 = source_w - x1, source_h - y1
+        
+        detections = slicer(image[y1:y2, x1:x2])
 
         xyxy = detections.xyxy
         confidence = detections.confidence
 
-        return xyxy, confidence
+        offset = np.array([x1, y1, x1, y1], dtype=detections.xyxy.dtype)
+        
+        return xyxy + offset, confidence
 
 
-    def process(self, image: np.ndarray, prompt: str, synonyms: str = '', threshold: float = 0.2, force: bool = False, bboxMargin:int = 0, verbose: bool = False, overlap_ratio:(float,float) = (0.2,0.2), slice_wh:(int,int) = (1000,1000), k:int = 10) -> np.ndarray:
+    def process(self, image: np.ndarray, prompt: str, synonyms: str = '', threshold: float = 0.2, nms=0.8, force: bool = False, bboxMargin:int = 0, verbose: bool = False, overlap_ratio:(float,float) = (0.2,0.2), slice_wh:(int,int) = (1000,1000), border_wh:(int,int) = (1000,1000), k:int = 10) -> np.ndarray:
 
         listSynonyms = synonyms.split('\n')
         listPrompt = prompt.split('\n')
@@ -399,7 +406,7 @@ class DetectAnything:
         bboxes = np.array([])
         confidence = np.array([])
         if recoOK or force:
-            bboxes, confidence = self.detect(image=image, TEXT_PROMPT=prompt, BOX_THRESHOLD=threshold, SLICE_WH = slice_wh, OVERLAP_RATIO = overlap_ratio, K = k)
+            bboxes, confidence = self.detect(image=image, TEXT_PROMPT=prompt, BOX_THRESHOLD=threshold, SLICE_WH = slice_wh, BORDER_WH = border_wh, OVERLAP_RATIO = overlap_ratio, K = k, NMS_THRESHOLD=nms)
             H,W,_ = image.shape
             for k,bbox in enumerate(bboxes):
                 if bbox[0] > bbox[2]:
